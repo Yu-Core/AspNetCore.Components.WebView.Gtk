@@ -8,7 +8,7 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true # Disable the .NET first time experience
   DOTNET_CLI_TELEMETRY_OPTOUT: true       # Disable sending .NET CLI telemetry
   DOTNET_VERSION: '10.0'
-  CSPROJ_FILE_PATH: 'src/BlazorWebView/src/Microsoft.AspNetCore.Components.WebView.Gtk.csproj'
+  CSPROJ_FILE_PATH: 'src/BlazorWebView/src/AspNetCore.Components.WebView.Gtk.csproj'
 
 jobs:
   build:
