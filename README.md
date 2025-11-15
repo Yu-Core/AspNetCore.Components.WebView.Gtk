@@ -8,7 +8,7 @@ AspNetCore.Components.WebView.Gtk is a library for building native clients using
 Reference [Yu-Core.AspNetCore.Components.WebView.Gtk](https://www.nuget.org/packages/Yu-Core.AspNetCore.Components.WebView.Gtk)
 
 ```
-<PackageReference Include="Yu-Core.AspNetCore.Components.WebView.Gtk" Version="0.1.1" />
+<PackageReference Include="Yu-Core.AspNetCore.Components.WebView.Gtk" Version="*" />
 ```
 
 Install `libwebkitgtk-6.0-4`
