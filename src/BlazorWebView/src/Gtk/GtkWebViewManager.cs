@@ -150,7 +150,7 @@ public partial class GtkWebViewManager : Microsoft.AspNetCore.Components.WebView
             null, null);
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
-        _webview.OnDecidePolicy += HandleOnDecidePolicy;
+        _webview.OnDecidePolicy += HandleDecidePolicy;
         _webview.OnDestroy += (o, args) => Detach();
 
         var userContentManager = _webview.GetUserContentManager();
@@ -278,44 +278,22 @@ public partial class GtkWebViewManager : Microsoft.AspNetCore.Components.WebView
         return defaultResult || hotReloadedResult;
     }
 
-    private bool HandleOnDecidePolicy(WebKit.WebView sender, WebKit.WebView.DecidePolicySignalArgs args)
+    private bool HandleDecidePolicy(WebKit.WebView sender, WebKit.WebView.DecidePolicySignalArgs args)
     {
-        if (args.Decision is NavigationPolicyDecision navigationPolicyDecision)
+        var decision = args.Decision;
+        return args.DecisionType switch
         {
-            return args.DecisionType switch
-            {
-                PolicyDecisionType.NavigationAction => HandleNavigationAction(navigationPolicyDecision),
-                PolicyDecisionType.NewWindowAction => HandleNewWindowAction(navigationPolicyDecision),
-                _ => false
-            };
-        }
-        else if (args.Decision is ResponsePolicyDecision responsePolicyDecision)
+            PolicyDecisionType.NavigationAction => HandleNavigationAction((NavigationPolicyDecision)decision),
+            PolicyDecisionType.NewWindowAction => HandleNewWindowAction((NavigationPolicyDecision)decision),
+            PolicyDecisionType.Response => HandleResponsePolicy((ResponsePolicyDecision)decision),
+            _ => false
+        };
+
+        bool HandleNavigationAction(NavigationPolicyDecision navigationDecision)
         {
-            if (responsePolicyDecision.IsMainFrameMainResource())
-            {
-                var uriString = responsePolicyDecision.GetRequest().GetUri();
-                if (Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out var uri))
-                {
-                    if (!AppOriginUri.IsBaseOf(uri))
-                    {
-                        responsePolicyDecision.Ignore();
-                        return true;
-                    }
-                }
-
-            }
-        }
-
-        return false;
-    }
-
-    private bool HandleNavigationAction(NavigationPolicyDecision args)
-    {
-        var uriString = args.NavigationAction.GetRequest().Uri;
-        if (Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out var uri))
-        {
+            var uri = new Uri(navigationDecision.NavigationAction.GetRequest().GetUri());
             var callbackArgs = UrlLoadingEventArgs.CreateWithDefaultLoadingStrategy(uri, AppOriginUri);
-            var navigationType = args.NavigationAction.GetNavigationType();
+            var navigationType = navigationDecision.NavigationAction.GetNavigationType();
 
             // <iframe> tags should open in webview
             if (navigationType == NavigationType.Other)
@@ -327,30 +305,48 @@ public partial class GtkWebViewManager : Microsoft.AspNetCore.Components.WebView
 
             _logger.NavigationEvent(uri, callbackArgs.UrlLoadingStrategy);
 
-            if (callbackArgs.UrlLoadingStrategy == UrlLoadingStrategy.OpenExternally)
+            var loadingStrategy = callbackArgs.UrlLoadingStrategy;
+
+            if (loadingStrategy == UrlLoadingStrategy.OpenExternally)
             {
                 LaunchUriInExternalBrowser(uri);
             }
 
-            return callbackArgs.UrlLoadingStrategy != UrlLoadingStrategy.OpenInWebView;
+            if (loadingStrategy != UrlLoadingStrategy.OpenInWebView)
+            {
+                navigationDecision.Ignore();
+            }
+
+            return loadingStrategy != UrlLoadingStrategy.OpenInWebView;
         }
 
-        return false;
-    }
-
-    private bool HandleNewWindowAction(NavigationPolicyDecision args)
-    {
-        var uriString = args.NavigationAction.GetRequest().Uri;
-
-        // Intercept _blank target <a> tags to always open in device browser.
-        // The ExternalLinkCallback is not invoked.
-        if (Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out var uri))
+        bool HandleNewWindowAction(NavigationPolicyDecision navigationDecision)
         {
+            // Intercept _blank target <a> tags to always open in device browser.
+            // The ExternalLinkCallback is not invoked.
+            var uri = new Uri(navigationDecision.NavigationAction.GetRequest().GetUri());
             LaunchUriInExternalBrowser(uri);
+            navigationDecision.Ignore();
             return true;
         }
 
-        return false;
+        static bool HandleResponsePolicy(ResponsePolicyDecision responsePolicyDecision)
+        {
+            if (!responsePolicyDecision.IsMainFrameMainResource())
+            {
+                return false;
+            }
+
+            var uri = new Uri(responsePolicyDecision.GetRequest().GetUri());
+
+            if (AppOriginUri.IsBaseOf(uri))
+            {
+                return false;
+            }
+
+            responsePolicyDecision.Ignore();
+            return true;
+        }
     }
 
     bool _detached = false;
