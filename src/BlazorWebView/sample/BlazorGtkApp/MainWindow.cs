@@ -1,11 +1,12 @@
 using BlazorGtkApp.Components;
+using Gtk;
 using Microsoft.AspNetCore.Components.WebView.Gtk;
 
 namespace BlazorGtkApp
 {
-    public class MainWindow : Gtk.ApplicationWindow
+    public class MainWindow : ApplicationWindow
     {
-        public MainWindow(Gtk.Application application, IServiceProvider serviceProvider)
+        public MainWindow(Application application, IServiceProvider serviceProvider)
             : base(new Gtk.Internal.ApplicationWindowHandle(Gtk.Internal.ApplicationWindow.New(application.Handle.DangerousGetHandle()), ownsHandle: false))
         {
             SetDefaultSize(1024, 768);

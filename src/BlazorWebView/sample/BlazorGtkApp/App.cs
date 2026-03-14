@@ -1,29 +1,29 @@
-using Gio;
+using Gtk;
 
 namespace BlazorGtkApp
 {
     public class App
     {
-        private const string applicationId = "com.yucore.blazorgtkapp";
+        private const string applicationId = "com.companyname.blazorgtkapp";
 
-        private readonly Gtk.Application app;
+        private readonly Application app;
 
         private readonly IServiceProvider _serviceProvider;
 
-        private Gtk.ApplicationWindow? window;
+        private ApplicationWindow? window;
 
         public App(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
 
-            app = Gtk.Application.New(applicationId, Gio.ApplicationFlags.NonUnique);
+            app = Application.New(applicationId, Gio.ApplicationFlags.NonUnique);
             GLib.Functions.SetPrgname("BlazorGtkApp");
             // Set the human-readable application name for app bar and task list.
             GLib.Functions.SetApplicationName("BlazorGtkApp");
             app.OnActivate += ApplicationActivate;
         }
 
-        private void ApplicationActivate(Application sender, EventArgs args)
+        private void ApplicationActivate(Gio.Application sender, EventArgs args)
         {
             window = new MainWindow(app, _serviceProvider);
             window.Present();

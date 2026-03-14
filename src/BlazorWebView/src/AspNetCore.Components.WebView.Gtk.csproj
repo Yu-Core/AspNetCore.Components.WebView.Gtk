@@ -38,7 +38,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="GirCore.Gtk-4.0" Version="0.6.3" />
-		<PackageReference Include="GirCore.WebKit-6.0" Version="0.6.3" />
+		<PackageReference Include="GirCore.Gtk-4.0" Version="0.7.0" />
+		<PackageReference Include="GirCore.WebKit-6.0" Version="0.7.0" />
 	</ItemGroup>
 </Project>
